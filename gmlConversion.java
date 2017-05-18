@@ -49,19 +49,15 @@ public class gmlConversion {
 	public static class node {
 	    public String id;
         public String label;
+        public String type;
         boolean inList;
 	 };
 
 	public static class edge {
 	 	public String source;
 	 	public String target;
+        public String weight;
         public String label;
-        public String attr5;
-        public String attr6;
-        public String attr7;
-        public String attr8;
-        public String attr9;
-        public String attr10;
         boolean inList;
 	 };
 
@@ -99,8 +95,8 @@ public class gmlConversion {
     */
     static File generateFile(File jsonDump) {
 
-    	String networkName = "LiveJournal social network (2006)";
-    	String graphName = "LiveJournal social network";
+    	String networkName = "BookCrossing ratings (2005)";
+    	String graphName = "implicit_ratings_2005";
     	String networkNameFile, graphNameFile;
     	networkNameFile = changeName(networkName);
     	graphNameFile = changeName(graphName);
@@ -309,52 +305,59 @@ public class gmlConversion {
     		FileReader fileReader = new FileReader(dataFileName);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String line = null;
-            int movID = 400000;
+            int n1ID = 1;
+            int n2ID = 1;
 
             while((line = bufferedReader.readLine()) != null) {
             	
-            	if (!line.contains("#")) {
-                    String[]split = line.split("\\s+");
+            	if (!line.contains("User-ID")) {
+                    String[]split = line.split(";");
 
                     //for (String id : split) {
+                    //if(Integer.parseInt(split[2].replaceAll("\"","")) != 0) {
+                        //System.out.println("hello");
 
                         node n1 = new node();
-                        n1.id = split[0];//.replaceFirst("^0+(?!$)", "");
+                        n1.id = Integer.toString(n1ID);
+                        n1.label = split[0].replaceAll("\"", "");
+                        n1.type = "userID";
                         //n1.label = split[2];
                         node n2 = new node();
-                        n2.id = split[1];//.replaceFirst("^0+(?!$)", "");
+                        n2.id = Integer.toString(n2ID);
+                        n2.label = split[1].replaceAll("\"","");
+                        n2.type = "ISBN";
                         //n2.label = split[3];
 
+                            //are the nodes in the nodeList already?
                     		for (node n : nodeList) {
-                    			if (n1.id.equals(n.id)) {
+                    			if (n1.label.equals(n.label)) {
                     				n1.inList = true;
+                                    n1.id = n.id;
                     			}
-                                if (n2.id.equals(n.id)) {
+                                if (n2.label.equals(n.label)) {
                                     n2.inList = true;
+                                    n2.id = n.id;
                                 }
                                 if(n2.inList && n1.inList) {
                                     break;
                                 }
                             }
 
+                            //Based on loops above, check if we should increment the ID.
                     		if (!n1.inList) {
                     			nodeList.add(n1);
+                                n1ID++;
                                 //System.out.println(source.id);
                     		}
                             if (!n2.inList) {
                                 nodeList.add(n2);
+                                n2ID++;
                                 //System.out.println(source.id);
                             }
 
                             edge newEdge = new edge();
                             newEdge.source = n1.id;
                             newEdge.target = n2.id;
-                            // newEdge.attr5 = split[4];
-                            // newEdge.attr6 = split[5];
-                            // newEdge.attr7 = split[6];
-                            // newEdge.attr8 = split[7];
-                            // newEdge.attr9 = split[8];
-                            // newEdge.attr10 = split[9];
                             edgeList.add(newEdge);
                     //}
             	}
@@ -380,7 +383,7 @@ public class gmlConversion {
 			ArrayList<String> toWrite = new ArrayList<String>();
 
 			for (node n : nodeList) {
-				String nodeInfo = "node \n[\nid " + n.id + "\n]\n";
+				String nodeInfo = "node \n[\nid " + n.id + "\nlabel " + n.label + "\ntype " + n.type + "\n]\n";
 				toWrite.add(nodeInfo);
 			}
 			for (String w : toWrite) {
@@ -409,9 +412,7 @@ public class gmlConversion {
 			ArrayList<String> toWrite = new ArrayList<String>();
 
 			for (edge e : edgeList) {
-				String edgeInfo = "edge \n[\nsource " + e.source + "\ntarget " + e.target + "\n]\n";
-                // \nlabel \"\nCo-occurence " + e.attr5 + "\nRelative Risk " + e.attr6 
-                // + "\nRelative Risk (99% conf. left) " + e.attr7 + "\nRelative Risk (99% conf. right) " + e.attr8 + "\nPhi correlation " + e.attr9 + "\nt-test value " + e.attr10 + "\"\n]\n";
+				String edgeInfo = "edge \n[\nsource " + e.source + "\ntarget " + e.target  + "\nweight " + e.weight + "\n]\n";
 				toWrite.add(edgeInfo);
 			}
 			for (String w : toWrite) {
